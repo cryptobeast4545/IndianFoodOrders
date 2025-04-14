@@ -241,7 +241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const orderData = insertOrderSchema.parse(req.body.order);
       
       // Validate order items data and parse customizations if needed
-      const orderItemsData = req.body.items.map(item => {
+      const orderItemsData = req.body.items.map((item: any) => {
         if (typeof item.customizations === 'string') {
           try {
             item.customizations = JSON.parse(item.customizations);
@@ -325,9 +325,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const totalSpent = customerOrders.reduce((sum, order) => sum + order.totalAmount, 0);
         
         // Sort orders by date
-        const sortedOrders = customerOrders.sort((a, b) => 
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        );
+        const sortedOrders = customerOrders.sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateA - dateB;
+        });
         
         const firstOrderDate = sortedOrders.length > 0 
           ? new Date(sortedOrders[0].createdAt)

@@ -1,12 +1,17 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import MenuItemTable from '@/components/admin/MenuItemTable';
 import CustomerDataTable from '@/components/admin/CustomerDataTable';
 import RestaurantSettings from '@/components/admin/RestaurantSettings';
-import { Utensils, Users, Settings, BarChart } from 'lucide-react';
+import { Utensils, Users, Settings, BarChart, LogOut } from 'lucide-react';
 
-export default function AdminPortal() {
+interface AdminPortalProps {
+  onLogout?: () => void;
+}
+
+export default function AdminPortal({ onLogout }: AdminPortalProps) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("menu-management");
 
@@ -14,7 +19,20 @@ export default function AdminPortal() {
     <div>
       {/* Admin Tabs Navigation */}
       <div className="bg-white rounded-lg p-4 shadow-md mb-6">
-        <h2 className="font-heading text-2xl mb-4 text-neutral-darker">Admin Dashboard</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="font-heading text-2xl text-neutral-darker">Admin Dashboard</h2>
+          {onLogout && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onLogout}
+              className="text-neutral-dark"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          )}
+        </div>
         <Tabs defaultValue="menu-management" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="border-b w-full justify-start space-x-6 bg-transparent">
             <TabsTrigger 

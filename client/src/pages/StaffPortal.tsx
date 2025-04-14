@@ -7,9 +7,13 @@ import { useFullOrders, useOrdersByStatus } from '@/hooks/useOrders';
 import { OrderStatus } from '@/types';
 import OrderCard from '@/components/staff/OrderCard';
 import OrderTable from '@/components/staff/OrderTable';
-import { Search, Bell } from 'lucide-react';
+import { Search, Bell, LogOut } from 'lucide-react';
 
-export default function StaffPortal() {
+interface StaffPortalProps {
+  onLogout?: () => void;
+}
+
+export default function StaffPortal({ onLogout }: StaffPortalProps) {
   const { toast } = useToast();
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -71,7 +75,20 @@ export default function StaffPortal() {
   return (
     <div>
       <div className="bg-white rounded-lg p-6 shadow-md mb-6">
-        <h2 className="font-heading text-2xl mb-4 text-neutral-darker">Staff Dashboard</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="font-heading text-2xl text-neutral-darker">Staff Dashboard</h2>
+          {onLogout && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onLogout}
+              className="text-neutral-dark"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          )}
+        </div>
         <div className="flex flex-wrap gap-3 mb-4">
           <Button 
             variant={filterStatus === "all" ? "default" : "outline"}
