@@ -96,16 +96,6 @@ export default function LoginPage({ portalType, onLogin }: LoginPageProps) {
           </CardFooter>
         </form>
       </Card>
-      <div className="mt-6 p-4 bg-neutral-light rounded-md">
-        <p className="text-sm text-neutral-dark text-center">
-          <strong>For demo purposes:</strong>
-          <br />
-          {portalType === "staff" 
-            ? "Staff password is: staff123" 
-            : "Admin password is: admin123"
-          }
-        </p>
-      </div>
     </div>
   );
 }
