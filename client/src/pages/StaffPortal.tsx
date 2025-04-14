@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useFullOrders, useOrdersByStatus } from '@/hooks/useOrders';
+import { useFullOrders, useOrdersByStatus, useUpdateOrderStatus } from '@/hooks/useOrders';
 import { OrderStatus } from '@/types';
 import OrderCard from '@/components/staff/OrderCard';
 import OrderTable from '@/components/staff/OrderTable';
@@ -22,11 +22,25 @@ export default function StaffPortal({ onLogout }: StaffPortalProps) {
   const { data: preparingOrders } = useOrdersByStatus(OrderStatus.PREPARING);
   const { data: readyOrders } = useOrdersByStatus(OrderStatus.READY);
 
+  // Get mutation function to update order status
+  const { mutate: updateOrderStatus, isPending: isUpdating } = useUpdateOrderStatus();
+
   // Handle order status update
   const handleUpdateOrderStatus = (id: number, status: typeof OrderStatus[keyof typeof OrderStatus]) => {
-    toast({
-      title: `Order #${id} updated`,
-      description: `Status changed to ${status}`,
+    updateOrderStatus({ id, status }, {
+      onSuccess: () => {
+        toast({
+          title: `Order #${id} updated`,
+          description: `Status changed to ${status}`,
+        });
+      },
+      onError: (error: Error) => {
+        toast({
+          title: "Error updating order",
+          description: error.message,
+          variant: "destructive"
+        });
+      }
     });
   };
 
