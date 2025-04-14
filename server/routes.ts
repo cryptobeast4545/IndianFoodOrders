@@ -308,6 +308,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create workbook and worksheet
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Customer Data');
+
+      if (!customers || !fullOrders) {
+        throw new Error("Failed to fetch customer or order data");
+      }
       
       // Define columns
       worksheet.columns = [
@@ -380,7 +384,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send buffer
       res.send(Buffer.from(buffer));
     } catch (error) {
-      res.status(500).json({ error: "Failed to export customer data" });
+      console.error("Export error:", error);
+      res.status(500).json({ 
+        error: "Failed to export customer data",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
