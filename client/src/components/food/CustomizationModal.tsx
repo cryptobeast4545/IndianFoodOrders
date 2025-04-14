@@ -46,9 +46,16 @@ export default function CustomizationModal({
       setSpecialInstructions("");
       setSelections({});
       setAdditionalPrice(0);
-      setTotalPrice(item.price);
+      setTotalPrice(item?.price || 0);
     }
   }, [item]);
+  
+  // Update total price when additional price changes
+  useEffect(() => {
+    if (item) {
+      setTotalPrice(item.price + additionalPrice);
+    }
+  }, [item, additionalPrice]);
 
   if (!item) return null;
 
@@ -67,13 +74,13 @@ export default function CustomizationModal({
       const prevChoice = option.choices.find(choice => choice.name === prevSelection);
       const newChoice = option.choices.find(choice => choice.name === value);
       
-      const prevPrice = prevChoice?.price || 0;
-      const newPrice = newChoice?.price || 0;
+      const prevPrice = (prevChoice && typeof prevChoice.price === 'number') ? prevChoice.price : 0;
+      const newPrice = (newChoice && typeof newChoice.price === 'number') ? newChoice.price : 0;
       
       setAdditionalPrice(prev => prev - prevPrice + newPrice);
     } else {
       const choice = option.choices.find(choice => choice.name === value);
-      if (choice?.price) {
+      if (choice && typeof choice.price === 'number') {
         setAdditionalPrice(prev => prev + choice.price);
       }
     }
@@ -93,9 +100,9 @@ export default function CustomizationModal({
     if (!choice) return;
     
     // Update price based on selection/deselection
-    if (checked && choice.price) {
+    if (checked && typeof choice.price === 'number') {
       setAdditionalPrice(prev => prev + choice.price);
-    } else if (!checked && choice.price) {
+    } else if (!checked && typeof choice.price === 'number') {
       setAdditionalPrice(prev => prev - choice.price);
     }
     
@@ -117,10 +124,7 @@ export default function CustomizationModal({
     });
   };
 
-  // Update total price when additional price changes
-  useEffect(() => {
-    setTotalPrice(item.price + additionalPrice);
-  }, [item.price, additionalPrice]);
+  // Removed duplicate useEffect for totalPrice update
 
   // Prepare customizations for cart
   const getAppliedCustomizations = (): AppliedCustomization[] => {
@@ -136,7 +140,7 @@ export default function CustomizationModal({
       // Calculate additional price
       selectedValues.forEach(value => {
         const choice = option.choices.find(choice => choice.name === value);
-        if (choice?.price) {
+        if (choice && typeof choice.price === 'number') {
           additionalPrice += choice.price;
         }
       });

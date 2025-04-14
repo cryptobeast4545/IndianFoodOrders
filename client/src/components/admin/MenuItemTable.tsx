@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMenuItems, useCategories, useDeleteMenuItem } from "@/hooks/useMenuItems";
 import AddMenuItemModal from "./AddMenuItemModal";
 import { MenuItem } from "@/types";
-import { Search, Plus, Edit, Trash, Check, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Edit, Trash, Check, X, ChevronLeft, ChevronRight, Utensils } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
