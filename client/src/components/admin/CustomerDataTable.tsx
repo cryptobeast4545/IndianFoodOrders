@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomers, useExportCustomers, useCustomerOrders } from "@/hooks/useOrders";
 import { Customer } from "@/types";
-import { Search, FileSpreadsheet, Eye, Trash, ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { Search, FileSpreadsheet, Eye, Trash, ChevronLeft, ChevronRight, Filter, Users } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
