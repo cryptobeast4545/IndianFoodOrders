@@ -9,6 +9,11 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { FullOrder, OrderStatus } from "@/types";
 import { format } from "date-fns";
 import OrderTracking from "../order/OrderTracking";
@@ -211,11 +216,18 @@ export default function OrderTable({ orders }: OrderTableProps) {
 
       {/* Order details modal */}
       {viewingOrder !== null && (
-        <OrderTracking
-          isOpen={true}
-          onClose={() => setViewingOrder(null)}
-          orderId={viewingOrder}
-        />
+        <Dialog open={true} onOpenChange={() => setViewingOrder(null)}>
+          <DialogContent className="sm:max-w-xl" aria-describedby="order-tracking-description">
+            <DialogTitle>Order #{viewingOrder} Tracking</DialogTitle>
+            <div id="order-tracking-description">
+              <OrderTracking
+                isOpen={true}
+                onClose={() => setViewingOrder(null)}
+                orderId={viewingOrder}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );
