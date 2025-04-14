@@ -50,6 +50,21 @@ export default function OrderTable({ orders }: OrderTableProps) {
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
+  // Delete order
+  const deleteOrder = async (orderId: number) => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete order');
+      }
+      // Refresh the orders list (handled by react-query)
+    } catch (error) {
+      console.error('Error deleting order:', error);
+    }
+  };
+
   // Get status badge color
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
@@ -102,13 +117,22 @@ export default function OrderTable({ orders }: OrderTableProps) {
                     {format(new Date(order.createdAt), "h:mm a")}
                   </TableCell>
                   <TableCell className="py-3 px-4 text-sm">
-                    <Button 
-                      variant="ghost" 
-                      className="text-primary hover:text-opacity-80 p-1 h-auto"
-                      onClick={() => setViewingOrder(order.id)}
-                    >
-                      <Eye size={16} />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="ghost" 
+                        className="text-primary hover:text-opacity-80 p-1 h-auto"
+                        onClick={() => setViewingOrder(order.id)}
+                      >
+                        <Eye size={16} />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        className="text-red-500 hover:text-red-700 p-1 h-auto"
+                        onClick={() => deleteOrder(order.id)}
+                      >
+                        <Trash size={16} />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

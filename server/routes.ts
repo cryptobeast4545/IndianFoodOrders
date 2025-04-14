@@ -298,6 +298,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({ error: "Invalid request" });
     }
   });
+
+  // Delete order endpoint
+  app.delete("/api/orders/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteOrder(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(400).json({ error: "Failed to delete order" });
+    }
+  });
   
   // Export customer data to Excel
   app.get("/api/export/customers", async (req, res) => {
