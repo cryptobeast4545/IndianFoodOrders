@@ -80,8 +80,9 @@ export default function CustomizationModal({
       setAdditionalPrice(prev => prev - prevPrice + newPrice);
     } else {
       const choice = option.choices.find(choice => choice.name === value);
-      if (choice && typeof choice.price === 'number') {
-        setAdditionalPrice(prev => prev + choice.price);
+      if (choice) {
+        const priceToAdd = choice.price ?? 0;
+        setAdditionalPrice(prev => prev + priceToAdd);
       }
     }
     
@@ -100,10 +101,11 @@ export default function CustomizationModal({
     if (!choice) return;
     
     // Update price based on selection/deselection
-    if (checked && typeof choice.price === 'number') {
-      setAdditionalPrice(prev => prev + choice.price);
-    } else if (!checked && typeof choice.price === 'number') {
-      setAdditionalPrice(prev => prev - choice.price);
+    const priceToAdd = choice.price ?? 0;
+    if (checked) {
+      setAdditionalPrice(prev => prev + priceToAdd);
+    } else {
+      setAdditionalPrice(prev => prev - priceToAdd);
     }
     
     // Update selections
