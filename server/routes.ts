@@ -253,8 +253,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return item;
       });
       
-      // Validate parsed items
-      const validatedItems = z.array(insertOrderItemSchema).parse(orderItemsData);
+      // Don't validate the order items yet, as they don't have orderId
+      // We'll add the orderId and validate after the order is created
+      const orderItemsSchema = z.array(insertOrderItemSchema.omit({ orderId: true }));
+      const validatedItems = orderItemsSchema.parse(orderItemsData);
       
       // Create the order
       const newOrder = await storage.createOrder(orderData);
