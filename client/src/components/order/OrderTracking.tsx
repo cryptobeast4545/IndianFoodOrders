@@ -24,12 +24,22 @@ export default function OrderTracking({
 }: OrderTrackingProps) {
   const { data: order, isLoading } = useFullOrder(isOpen ? orderId : null);
   
+  // Format dates safely
+  const formatDateSafe = (dateStr: string | Date | null | undefined) => {
+    if (!dateStr) return "-";
+    try {
+      return format(new Date(dateStr), "h:mm a");
+    } catch (e) {
+      return "-";
+    }
+  };
+
   // Format order stages for the timeline
   const orderStages = [
     {
       id: "received",
       label: "Order Received",
-      time: order ? format(new Date(order.createdAt), "h:mm a") : "-",
+      time: order?.createdAt ? formatDateSafe(order.createdAt) : "-",
       completed: true,
     },
     {
@@ -38,7 +48,7 @@ export default function OrderTracking({
       time: order?.status === OrderStatus.PREPARING || 
             order?.status === OrderStatus.READY || 
             order?.status === OrderStatus.COMPLETED
-            ? format(new Date(order.updatedAt), "h:mm a") : "Estimated",
+            ? formatDateSafe(order.updatedAt) : "Estimated",
       completed: order?.status === OrderStatus.PREPARING || 
                 order?.status === OrderStatus.READY || 
                 order?.status === OrderStatus.COMPLETED,
@@ -49,7 +59,7 @@ export default function OrderTracking({
       label: "Ready for Pickup",
       time: order?.status === OrderStatus.READY || 
             order?.status === OrderStatus.COMPLETED
-            ? format(new Date(order.updatedAt), "h:mm a") : "Estimated",
+            ? formatDateSafe(order.updatedAt) : "Estimated",
       completed: order?.status === OrderStatus.READY || 
                 order?.status === OrderStatus.COMPLETED,
       active: order?.status === OrderStatus.READY,
@@ -58,7 +68,7 @@ export default function OrderTracking({
       id: "completed",
       label: "Completed",
       time: order?.status === OrderStatus.COMPLETED
-            ? format(new Date(order.updatedAt), "h:mm a") : "-",
+            ? formatDateSafe(order.updatedAt) : "-",
       completed: order?.status === OrderStatus.COMPLETED,
       active: order?.status === OrderStatus.COMPLETED,
     },
@@ -135,18 +145,22 @@ export default function OrderTracking({
                             ? (() => {
                                 try {
                                   const customizations = JSON.parse(item.customizations);
-                                  return customizations.map((c: any, i: number) => (
-                                    <span key={i} className="block">
-                                      {c.optionName}: {c.selections.join(', ')}
-                                    </span>
-                                  ));
+                                  return (
+                                    <>
+                                      {customizations.map((c: any, i: number) => (
+                                        <span key={i} className="block">
+                                          {c.optionName}: {c.selections.join(', ')}
+                                        </span>
+                                      ))}
+                                    </>
+                                  );
                                 } catch (e) {
-                                  return "Custom options";
+                                  return <span>Custom options</span>;
                                 }
                               })()
                             : typeof item.customizations === 'object'
-                              ? JSON.stringify(item.customizations)
-                              : "Custom options"
+                              ? <span>{JSON.stringify(item.customizations)}</span>
+                              : <span>Custom options</span>
                           }
                         </p>
                       )}
