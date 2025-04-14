@@ -1,15 +1,11 @@
-import { 
-  type RestaurantSettings, type InsertRestaurantSettings,
-  type Category, type InsertCategory,
-  type MenuItem, type InsertMenuItem, 
-  type Customer, type InsertCustomer,
-  type Order, type InsertOrder,
-  type OrderItem, type InsertOrderItem,
-  type OrderStatusType, type FullOrder, 
-  OrderStatus
+import session from "express-session";
+import { restaurantSettings, categories, menuItems, customers, 
+  orders, orderItems, type OrderStatusType, type RestaurantSettings, 
+  type Category, type MenuItem, type Customer, type Order, type OrderItem, 
+  type InsertCategory, type InsertMenuItem, type InsertCustomer, 
+  type InsertOrder, type InsertOrderItem, OrderStatus, type FullOrder
 } from "@shared/schema";
 
-// Storage interface for restaurant operations
 export interface IStorage {
   // Restaurant settings
   getRestaurantSettings(): Promise<RestaurantSettings>;
@@ -50,327 +46,282 @@ export interface IStorage {
   
   // Full orders with all related data
   getAllFullOrders(): Promise<FullOrder[]>;
+  
+  sessionStore: any;
 }
 
-export class MemStorage implements IStorage {
-  private restaurantSettings: RestaurantSettings;
-  private categories: Map<number, Category>;
-  private menuItems: Map<number, MenuItem>;
-  private customers: Map<number, Customer>;
-  private orders: Map<number, Order>;
-  private orderItems: Map<number, OrderItem>;
-  
-  private nextRestaurantId: number = 1;
-  private nextCategoryId: number = 1;
-  private nextMenuItemId: number = 1;
-  private nextCustomerId: number = 1;
-  private nextOrderId: number = 1;
-  private nextOrderItemId: number = 1;
-  
+import connectPg from "connect-pg-simple";
+import { db, pool } from "./db";
+import { 
+  eq, and, desc, sql, asc, isNull, ne
+} from "drizzle-orm";
+
+const PostgresSessionStore = connectPg(session);
+
+export class DatabaseStorage implements IStorage {
+  sessionStore: session.SessionStore;
+
   constructor() {
-    // Initialize with default restaurant settings
-    this.restaurantSettings = {
-      id: this.nextRestaurantId++,
+    this.sessionStore = new PostgresSessionStore({ 
+      pool, 
+      createTableIfMissing: true 
+    });
+  }
+
+  async getRestaurantSettings(): Promise<RestaurantSettings> {
+    const [settings] = await db.select().from(restaurantSettings).limit(1);
+    return settings || {
+      id: 1,
       name: "Annapurna",
       tagline: "Authentic Indian Vegetarian Cuisine",
-      address: "123 Food Street, Flavor Town, FT 12345",
-      phoneNumber: "+91 1234 567890",
-      email: "info@annapurnarestaurant.com",
       taxRate: 5,
       primaryColor: "#E64A19",
-      secondaryColor: "#4CAF50",
-      fontSelection: "default"
+      secondaryColor: "#4CAF50"
     };
-    
-    // Initialize empty maps for each entity
-    this.categories = new Map();
-    this.menuItems = new Map();
-    this.customers = new Map();
-    this.orders = new Map();
-    this.orderItems = new Map();
-    
-    // Add some default categories
-    const categories = [
-      { name: "Starters", displayOrder: 1 },
-      { name: "Main Course", displayOrder: 2 },
-      { name: "Breads", displayOrder: 3 },
-      { name: "Rice & Biryani", displayOrder: 4 },
-      { name: "Desserts", displayOrder: 5 },
-      { name: "Beverages", displayOrder: 6 }
-    ];
-    
-    categories.forEach(cat => this.createCategory(cat));
-    
-    // Add some default menu items
-    const menuItems = [
-      {
-        name: "Paneer Butter Masala",
-        description: "Cottage cheese cubes in rich tomato and butter gravy.",
-        price: 250,
-        categoryId: 2, // Main Course
-        imageUrl: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-        isCustomizable: true,
-        isActive: true,
-        customizationOptions: [
-          {
-            name: "Spice Level",
-            type: "single",
-            required: true,
-            choices: [
-              { name: "Mild" },
-              { name: "Medium" },
-              { name: "Hot" }
-            ]
-          },
-          {
-            name: "Add-ons",
-            type: "multiple",
-            required: false,
-            choices: [
-              { name: "Extra Paneer", price: 50 },
-              { name: "Extra Gravy", price: 30 },
-              { name: "Extra Butter", price: 20 }
-            ]
-          }
-        ]
-      },
-      {
-        name: "Masala Dosa",
-        description: "Crispy rice crepe stuffed with spiced potato filling.",
-        price: 180,
-        categoryId: 1, // Starters
-        imageUrl: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-        isCustomizable: true,
-        isActive: true,
-        customizationOptions: [
-          {
-            name: "Add-ons",
-            type: "multiple",
-            required: false,
-            choices: [
-              { name: "Extra Chutney", price: 20 },
-              { name: "Extra Potato Filling", price: 40 }
-            ]
-          }
-        ]
-      },
-      {
-        name: "Vegetable Biryani",
-        description: "Fragrant basmati rice cooked with vegetables and aromatic spices.",
-        price: 220,
-        categoryId: 4, // Rice & Biryani
-        imageUrl: "https://images.unsplash.com/photo-1589647363585-f4a7d3877b10?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-        isCustomizable: true,
-        isActive: true,
-        customizationOptions: [
-          {
-            name: "Spice Level",
-            type: "single",
-            required: true,
-            choices: [
-              { name: "Mild" },
-              { name: "Medium" },
-              { name: "Hot" }
-            ]
-          }
-        ]
-      },
-      {
-        name: "Butter Naan",
-        description: "Soft leavened bread brushed with butter.",
-        price: 60,
-        categoryId: 3, // Breads
-        imageUrl: "https://images.unsplash.com/photo-1572057045486-77a0d118ae13?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-        isCustomizable: false,
-        isActive: true,
-        customizationOptions: []
-      },
-      {
-        name: "Gulab Jamun",
-        description: "Deep-fried milk solids soaked in sugar syrup.",
-        price: 120,
-        categoryId: 5, // Desserts
-        imageUrl: "https://images.unsplash.com/photo-1605197161470-5cb86a245ba4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-        isCustomizable: false,
-        isActive: true,
-        customizationOptions: []
-      }
-    ];
-    
-    menuItems.forEach(item => this.createMenuItem(item));
   }
-  
-  /* Restaurant Settings Methods */
-  async getRestaurantSettings(): Promise<RestaurantSettings> {
-    return this.restaurantSettings;
-  }
-  
+
   async updateRestaurantSettings(settings: Partial<RestaurantSettings>): Promise<RestaurantSettings> {
-    this.restaurantSettings = { ...this.restaurantSettings, ...settings };
-    return this.restaurantSettings;
+    const [existingSettings] = await db.select().from(restaurantSettings).limit(1);
+    
+    if (existingSettings) {
+      const [updated] = await db
+        .update(restaurantSettings)
+        .set(settings)
+        .where(eq(restaurantSettings.id, existingSettings.id))
+        .returning();
+      return updated;
+    } else {
+      // Create first restaurant settings
+      const [newSettings] = await db
+        .insert(restaurantSettings)
+        .values({ id: 1, ...settings })
+        .returning();
+      return newSettings;
+    }
   }
-  
-  /* Category Methods */
+
   async getAllCategories(): Promise<Category[]> {
-    return Array.from(this.categories.values())
-      .sort((a, b) => a.displayOrder - b.displayOrder);
+    return db.select().from(categories).orderBy(asc(categories.displayOrder));
   }
-  
+
   async createCategory(category: InsertCategory): Promise<Category> {
-    const id = this.nextCategoryId++;
-    const newCategory: Category = { ...category, id };
-    this.categories.set(id, newCategory);
+    const [newCategory] = await db
+      .insert(categories)
+      .values(category)
+      .returning();
     return newCategory;
   }
-  
+
   async updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category | undefined> {
-    const existingCategory = this.categories.get(id);
-    if (!existingCategory) return undefined;
-    
-    const updatedCategory = { ...existingCategory, ...category };
-    this.categories.set(id, updatedCategory);
-    return updatedCategory;
+    const [updated] = await db
+      .update(categories)
+      .set(category)
+      .where(eq(categories.id, id))
+      .returning();
+    return updated;
   }
-  
+
   async deleteCategory(id: number): Promise<boolean> {
-    return this.categories.delete(id);
+    await db.delete(categories).where(eq(categories.id, id));
+    return true;
   }
-  
-  /* Menu Item Methods */
+
   async getAllMenuItems(activeOnly: boolean = false): Promise<MenuItem[]> {
-    const items = Array.from(this.menuItems.values());
-    return activeOnly ? items.filter(item => item.isActive) : items;
+    if (activeOnly) {
+      return db.select().from(menuItems).where(eq(menuItems.isActive, true));
+    }
+    return db.select().from(menuItems);
   }
-  
+
   async getMenuItemById(id: number): Promise<MenuItem | undefined> {
-    return this.menuItems.get(id);
+    const [item] = await db.select().from(menuItems).where(eq(menuItems.id, id));
+    return item;
   }
-  
+
   async getMenuItemsByCategory(categoryId: number): Promise<MenuItem[]> {
-    return Array.from(this.menuItems.values())
-      .filter(item => item.categoryId === categoryId);
+    return db
+      .select()
+      .from(menuItems)
+      .where(
+        and(
+          eq(menuItems.categoryId, categoryId),
+          eq(menuItems.isActive, true)
+        )
+      );
   }
-  
+
   async createMenuItem(item: InsertMenuItem): Promise<MenuItem> {
-    const id = this.nextMenuItemId++;
-    const newMenuItem: MenuItem = { ...item, id };
-    this.menuItems.set(id, newMenuItem);
-    return newMenuItem;
+    const [newItem] = await db
+      .insert(menuItems)
+      .values(item)
+      .returning();
+    return newItem;
   }
-  
+
   async updateMenuItem(id: number, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined> {
-    const existingItem = this.menuItems.get(id);
-    if (!existingItem) return undefined;
-    
-    const updatedItem = { ...existingItem, ...item };
-    this.menuItems.set(id, updatedItem);
-    return updatedItem;
+    const [updated] = await db
+      .update(menuItems)
+      .set(item)
+      .where(eq(menuItems.id, id))
+      .returning();
+    return updated;
   }
-  
+
   async deleteMenuItem(id: number): Promise<boolean> {
-    return this.menuItems.delete(id);
+    await db.delete(menuItems).where(eq(menuItems.id, id));
+    return true;
   }
-  
-  /* Customer Methods */
+
   async getAllCustomers(): Promise<Customer[]> {
-    return Array.from(this.customers.values());
+    return db.select().from(customers);
   }
-  
+
   async getCustomerById(id: number): Promise<Customer | undefined> {
-    return this.customers.get(id);
+    const [customer] = await db.select().from(customers).where(eq(customers.id, id));
+    return customer;
   }
-  
+
   async getCustomerByPhoneNumber(phoneNumber: string): Promise<Customer | undefined> {
-    return Array.from(this.customers.values())
-      .find(customer => customer.phoneNumber === phoneNumber);
+    const [customer] = await db
+      .select()
+      .from(customers)
+      .where(eq(customers.phoneNumber, phoneNumber));
+    return customer;
   }
-  
+
   async createCustomer(customer: InsertCustomer): Promise<Customer> {
-    const id = this.nextCustomerId++;
+    // Check if customer exists first
+    const existingCustomer = await this.getCustomerByPhoneNumber(customer.phoneNumber);
+    if (existingCustomer) {
+      // Update the existing customer name if provided
+      if (customer.name && customer.name !== existingCustomer.name) {
+        const [updated] = await db
+          .update(customers)
+          .set({ name: customer.name })
+          .where(eq(customers.id, existingCustomer.id))
+          .returning();
+        return updated;
+      }
+      return existingCustomer;
+    }
+
+    // Create new customer
     const now = new Date();
-    const newCustomer: Customer = { ...customer, id, createdAt: now };
-    this.customers.set(id, newCustomer);
+    const [newCustomer] = await db
+      .insert(customers)
+      .values({ ...customer, createdAt: now })
+      .returning();
     return newCustomer;
   }
-  
-  /* Order Methods */
+
   async getAllOrders(): Promise<Order[]> {
-    return Array.from(this.orders.values())
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return db.select().from(orders);
   }
-  
+
   async getOrderById(id: number): Promise<Order | undefined> {
-    return this.orders.get(id);
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    return order;
   }
-  
+
   async getOrdersByStatus(status: OrderStatusType): Promise<Order[]> {
-    return Array.from(this.orders.values())
-      .filter(order => order.status === status)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return db
+      .select()
+      .from(orders)
+      .where(eq(orders.status, status))
+      .orderBy(desc(orders.createdAt));
   }
-  
+
   async getOrdersByCustomerId(customerId: number): Promise<Order[]> {
-    return Array.from(this.orders.values())
-      .filter(order => order.customerId === customerId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return db
+      .select()
+      .from(orders)
+      .where(eq(orders.customerId, customerId))
+      .orderBy(desc(orders.createdAt));
   }
-  
+
   async createOrder(order: InsertOrder): Promise<Order> {
-    const id = this.nextOrderId++;
     const now = new Date();
-    const newOrder: Order = { ...order, id, createdAt: now, updatedAt: now };
-    this.orders.set(id, newOrder);
+    const [newOrder] = await db
+      .insert(orders)
+      .values({
+        ...order,
+        status: OrderStatus.NEW,
+        createdAt: now,
+        updatedAt: now
+      })
+      .returning();
     return newOrder;
   }
-  
+
   async updateOrderStatus(id: number, status: OrderStatusType): Promise<Order | undefined> {
-    const existingOrder = this.orders.get(id);
-    if (!existingOrder) return undefined;
-    
     const now = new Date();
-    const updatedOrder: Order = { ...existingOrder, status, updatedAt: now };
-    this.orders.set(id, updatedOrder);
-    return updatedOrder;
+    const [updated] = await db
+      .update(orders)
+      .set({ status, updatedAt: now })
+      .where(eq(orders.id, id))
+      .returning();
+    return updated;
   }
-  
-  /* Order Item Methods */
+
   async getOrderItemsByOrderId(orderId: number): Promise<OrderItem[]> {
-    return Array.from(this.orderItems.values())
-      .filter(item => item.orderId === orderId);
+    return db
+      .select()
+      .from(orderItems)
+      .where(eq(orderItems.orderId, orderId));
   }
-  
+
   async createOrderItem(item: InsertOrderItem): Promise<OrderItem> {
-    const id = this.nextOrderItemId++;
-    const newOrderItem: OrderItem = { ...item, id };
-    this.orderItems.set(id, newOrderItem);
-    return newOrderItem;
+    const [newItem] = await db
+      .insert(orderItems)
+      .values(item)
+      .returning();
+    return newItem;
   }
-  
-  /* Full Order Methods */
+
   async getFullOrderById(id: number): Promise<FullOrder | undefined> {
     const order = await this.getOrderById(id);
     if (!order) return undefined;
-    
+
     const customer = await this.getCustomerById(order.customerId);
     if (!customer) return undefined;
-    
-    const orderItems = await this.getOrderItemsByOrderId(id);
-    const items = await Promise.all(orderItems.map(async (item) => {
-      const menuItem = await this.getMenuItemById(item.menuItemId);
-      return { ...item, menuItem: menuItem! };
-    }));
-    
-    return { ...order, customer, items };
-  }
-  
-  async getAllFullOrders(): Promise<FullOrder[]> {
-    const orders = await this.getAllOrders();
-    const fullOrders = await Promise.all(
-      orders.map(order => this.getFullOrderById(order.id))
+
+    const items = await this.getOrderItemsByOrderId(id);
+    const fullItems = await Promise.all(
+      items.map(async (item) => {
+        const menuItem = await this.getMenuItemById(item.menuItemId);
+        return { ...item, menuItem: menuItem! };
+      })
     );
-    
-    return fullOrders.filter((order): order is FullOrder => order !== undefined);
+
+    return {
+      ...order,
+      customer,
+      items: fullItems,
+    };
+  }
+
+  async getAllFullOrders(): Promise<FullOrder[]> {
+    const allOrders = await this.getAllOrders();
+    return Promise.all(
+      allOrders.map(async (order) => {
+        const customer = await this.getCustomerById(order.customerId);
+        const items = await this.getOrderItemsByOrderId(order.id);
+        const fullItems = await Promise.all(
+          items.map(async (item) => {
+            const menuItem = await this.getMenuItemById(item.menuItemId);
+            return { ...item, menuItem: menuItem! };
+          })
+        );
+
+        return {
+          ...order,
+          customer: customer!,
+          items: fullItems,
+        };
+      })
+    );
   }
 }
 
-export const storage = new MemStorage();
+// Use database storage
+export const storage = new DatabaseStorage();

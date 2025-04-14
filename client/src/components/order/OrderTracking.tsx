@@ -131,7 +131,23 @@ export default function OrderTracking({
                       <p className="font-medium">{item.menuItem.name} x{item.quantity}</p>
                       {item.customizations && (
                         <p className="text-sm text-neutral-dark">
-                          {JSON.stringify(item.customizations)}
+                          {typeof item.customizations === 'string' 
+                            ? (() => {
+                                try {
+                                  const customizations = JSON.parse(item.customizations);
+                                  return customizations.map((c: any, i: number) => (
+                                    <span key={i} className="block">
+                                      {c.optionName}: {c.selections.join(', ')}
+                                    </span>
+                                  ));
+                                } catch (e) {
+                                  return "Custom options";
+                                }
+                              })()
+                            : typeof item.customizations === 'object'
+                              ? JSON.stringify(item.customizations)
+                              : "Custom options"
+                          }
                         </p>
                       )}
                     </div>
