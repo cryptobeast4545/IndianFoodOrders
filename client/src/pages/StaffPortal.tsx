@@ -144,7 +144,7 @@ export default function StaffPortal({ onLogout }: StaffPortalProps) {
           <Button 
             variant={filterStatus === OrderStatus.COMPLETED ? "default" : "outline"}
             onClick={() => setFilterStatus(OrderStatus.COMPLETED)}
-            className={filterStatus === OrderStatus.COMPLETED ? "bg-[#666666] hover:bg-[#555555] text-white" : "text-neutral-dark hover:bg-neutral-100"}
+            className={`${filterStatus === OrderStatus.COMPLETED ? "bg-primary text-white hover:bg-primary/90" : "text-primary border-primary hover:bg-primary/10"}`}
           >
             Completed
           </Button>
