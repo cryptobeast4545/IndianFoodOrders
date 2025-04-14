@@ -331,13 +331,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return dateA - dateB;
         });
         
-        const firstOrderDate = sortedOrders.length > 0 
-          ? new Date(sortedOrders[0].createdAt)
-          : new Date(customer.createdAt);
+        // Create dates safely with null checks
+        // Get the first order's date safely
+        let firstOrderDate: Date;
+        if (sortedOrders.length > 0 && sortedOrders[0]?.createdAt) {
+          firstOrderDate = new Date(String(sortedOrders[0].createdAt));
+        } else if (customer.createdAt) {
+          firstOrderDate = new Date(customer.createdAt.toString());
+        } else {
+          firstOrderDate = new Date();
+        }
         
-        const lastOrderDate = sortedOrders.length > 0 
-          ? new Date(sortedOrders[sortedOrders.length - 1].createdAt)
-          : new Date(customer.createdAt);
+        // Get the last order's date safely
+        let lastOrderDate: Date;
+        const lastOrder = sortedOrders.length > 0 ? sortedOrders[sortedOrders.length - 1] : null;
+        if (lastOrder && lastOrder.createdAt) {
+          lastOrderDate = new Date(String(lastOrder.createdAt));
+        } else if (customer.createdAt) {
+          lastOrderDate = new Date(customer.createdAt.toString());
+        } else {
+          lastOrderDate = new Date();
+        }
         
         worksheet.addRow({
           id: customer.id,

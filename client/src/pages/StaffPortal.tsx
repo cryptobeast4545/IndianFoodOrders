@@ -65,7 +65,11 @@ export default function StaffPortal({ onLogout }: StaffPortalProps) {
     if (!allOrders) return [];
     return allOrders
       .filter(order => order.status === OrderStatus.COMPLETED)
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .sort((a, b) => {
+        const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return dateB - dateA; // Descending order
+      })
       .slice(0, 10); // Show only last 10 completed orders
   };
 
