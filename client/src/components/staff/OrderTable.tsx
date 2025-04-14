@@ -8,12 +8,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Eye, ChevronLeft, ChevronRight, Trash } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import { FullOrder, OrderStatus } from "@/types";
 import { format } from "date-fns";
 import OrderTracking from "../order/OrderTracking";
@@ -53,21 +48,6 @@ export default function OrderTable({ orders }: OrderTableProps) {
   // Format status for display
   const formatStatus = (status: string) => {
     return status.charAt(0).toUpperCase() + status.slice(1);
-  };
-
-  // Delete order
-  const deleteOrder = async (orderId: number) => {
-    try {
-      const response = await fetch(`/api/orders/${orderId}`, {
-        method: 'DELETE'
-      });
-      if (!response.ok) {
-        throw new Error('Failed to delete order');
-      }
-      // Refresh the orders list (handled by react-query)
-    } catch (error) {
-      console.error('Error deleting order:', error);
-    }
   };
 
   // Get status badge color
@@ -122,22 +102,13 @@ export default function OrderTable({ orders }: OrderTableProps) {
                     {format(new Date(order.createdAt), "h:mm a")}
                   </TableCell>
                   <TableCell className="py-3 px-4 text-sm">
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="ghost" 
-                        className="text-primary hover:text-opacity-80 p-1 h-auto"
-                        onClick={() => setViewingOrder(order.id)}
-                      >
-                        <Eye size={16} />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        className="text-red-500 hover:text-red-700 p-1 h-auto"
-                        onClick={() => deleteOrder(order.id)}
-                      >
-                        <Trash size={16} />
-                      </Button>
-                    </div>
+                    <Button 
+                      variant="ghost" 
+                      className="text-primary hover:text-opacity-80 p-1 h-auto"
+                      onClick={() => setViewingOrder(order.id)}
+                    >
+                      <Eye size={16} />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -216,18 +187,11 @@ export default function OrderTable({ orders }: OrderTableProps) {
 
       {/* Order details modal */}
       {viewingOrder !== null && (
-        <Dialog open={true} onOpenChange={() => setViewingOrder(null)}>
-          <DialogContent className="sm:max-w-xl" aria-describedby="order-tracking-description">
-            <DialogTitle>Order #{viewingOrder} Tracking</DialogTitle>
-            <div id="order-tracking-description">
-              <OrderTracking
-                isOpen={true}
-                onClose={() => setViewingOrder(null)}
-                orderId={viewingOrder}
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
+        <OrderTracking
+          isOpen={true}
+          onClose={() => setViewingOrder(null)}
+          orderId={viewingOrder}
+        />
       )}
     </>
   );
