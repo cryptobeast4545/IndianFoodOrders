@@ -300,6 +300,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Export customer data to Excel
+  app.delete("/api/orders/clear-completed", async (req, res) => {
+    try {
+      await storage.clearCompletedOrders();
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error clearing orders:", error);
+      res.status(500).json({ error: "Failed to clear orders" });
+    }
+  });
+
   app.get("/api/export/customers", async (req, res) => {
     try {
       const customers = await storage.getAllCustomers();

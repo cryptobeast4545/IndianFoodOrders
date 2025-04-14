@@ -68,9 +68,29 @@ export default function OrderTable({ orders }: OrderTableProps) {
     }
   };
 
+  const clearCompletedOrders = async () => {
+    try {
+      await fetch('/api/orders/clear-completed', { method: 'DELETE' });
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/orders/full'] });
+    } catch (error) {
+      console.error('Failed to clear orders:', error);
+    }
+  };
+
   return (
     <>
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="p-4 border-b flex justify-between items-center">
+          <h3 className="font-heading text-xl text-neutral-darker">Recent Orders</h3>
+          <Button 
+            variant="destructive" 
+            size="sm"
+            onClick={clearCompletedOrders}
+          >
+            Clear Completed Orders
+          </Button>
+        </div>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>

@@ -300,6 +300,11 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  async clearCompletedOrders(): Promise<void> {
+    await db.delete(orders)
+      .where(eq(orders.status, OrderStatus.COMPLETED));
+  }
+
   async getAllFullOrders(): Promise<FullOrder[]> {
     const allOrders = await this.getAllOrders();
     return Promise.all(
