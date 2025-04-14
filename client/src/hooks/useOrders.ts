@@ -95,14 +95,14 @@ export function useCreateOrder() {
         order: {
           customerId: customerData.id,
           totalAmount,
-          tableNumber,
+          tableNumber: tableNumber || 1,
           specialInstructions,
         },
         items: cart.map(item => ({
           menuItemId: item.menuItem.id,
           quantity: item.quantity,
           price: item.totalPrice,
-          customizations: item.customizations.length > 0 ? item.customizations : undefined,
+          customizations: item.customizations.length > 0 ? JSON.stringify(item.customizations) : undefined,
         })),
       };
 

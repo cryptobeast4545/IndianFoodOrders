@@ -235,15 +235,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new order with items
   app.post("/api/orders", async (req, res) => {
     try {
+      console.log("Received order data:", JSON.stringify(req.body));
+      
+      // Validate order data
       const orderData = insertOrderSchema.parse(req.body.order);
-      const orderItemsData = z.array(insertOrderItemSchema).parse(req.body.items);
+      
+      // Validate order items data and parse customizations if needed
+      const orderItemsData = req.body.items.map(item => {
+        if (typeof item.customizations === 'string') {
+          try {
+            item.customizations = JSON.parse(item.customizations);
+          } catch (e) {
+            console.log("Failed to parse customizations", e);
+            // Keep it as string if parsing fails
+          }
+        }
+        return item;
+      });
+      
+      // Validate parsed items
+      const validatedItems = z.array(insertOrderItemSchema).parse(orderItemsData);
       
       // Create the order
       const newOrder = await storage.createOrder(orderData);
       
       // Create order items
       const orderItems = await Promise.all(
-        orderItemsData.map(item => 
+        validatedItems.map(item => 
           storage.createOrderItem({ ...item, orderId: newOrder.id })
         )
       );
@@ -252,6 +270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fullOrder = await storage.getFullOrderById(newOrder.id);
       res.status(201).json(fullOrder);
     } catch (error) {
+      console.error("Order creation error:", error);
       res.status(400).json({ error: "Invalid order data" });
     }
   });
