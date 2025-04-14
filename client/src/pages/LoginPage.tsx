@@ -1,11 +1,18 @@
-import { useState } from 'react';
-import { useLocation } from 'wouter';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { useLocation } from "wouter";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Lock } from 'lucide-react';
+import { Lock } from "lucide-react";
 
 interface LoginPageProps {
   portalType: "staff" | "admin";
@@ -20,24 +27,24 @@ export default function LoginPage({ portalType, onLogin }: LoginPageProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!password.trim()) {
       toast({
         title: "Password Required",
         description: "Please enter a password to continue",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     // Attempt login
     const success = onLogin(portalType, password);
-    
+
     setTimeout(() => {
       setIsLoading(false);
-      
+
       if (success) {
         // Redirect to home after successful login
         setLocation("/");
@@ -57,7 +64,8 @@ export default function LoginPage({ portalType, onLogin }: LoginPageProps) {
             {portalType === "staff" ? "Staff Login" : "Admin Login"}
           </CardTitle>
           <CardDescription className="text-center">
-            Enter your password to access the {portalType === "staff" ? "staff" : "admin"} portal
+            Enter your password to access the{" "}
+            {portalType === "staff" ? "staff" : "admin"} portal
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -78,16 +86,12 @@ export default function LoginPage({ portalType, onLogin }: LoginPageProps) {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-2">
-            <Button 
-              type="submit" 
-              className="w-full"
-              disabled={isLoading}
-            >
+            <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Authenticating..." : "Login"}
             </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               className="w-full"
               onClick={handleBack}
             >
@@ -98,12 +102,9 @@ export default function LoginPage({ portalType, onLogin }: LoginPageProps) {
       </Card>
       <div className="mt-6 p-4 bg-neutral-light rounded-md">
         <p className="text-sm text-neutral-dark text-center">
-          <strong>For demo purposes:</strong>
+          <strong></strong>
           <br />
-          {portalType === "staff" 
-            ? "Staff password is: staff123" 
-            : "Admin password is: admin123"
-          }
+          {portalType === "staff" ? "" : ""}
         </p>
       </div>
     </div>
